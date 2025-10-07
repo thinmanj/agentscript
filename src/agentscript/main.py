@@ -28,7 +28,7 @@ def compile_file(input_file: Path, output_file: Path = None):
         
         # Generate Python code
         print("Generating Python code...")
-        python_code = generate_python_code(ast)
+        python_code = generate_python_code(ast, str(input_file))
         
         # Determine output file
         if output_file is None:
