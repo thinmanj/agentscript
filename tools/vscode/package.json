@@ -1,0 +1,47 @@
+{
+  "name": "agentscript",
+  "displayName": "AgentScript",
+  "description": "Language support for AgentScript - a declarative language for agentic program creation",
+  "version": "0.1.0",
+  "publisher": "agentscript-dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/agentscript/agentscript-vscode"
+  },
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "keywords": [
+    "agentscript",
+    "ai",
+    "data-processing",
+    "pipeline",
+    "declarative"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "agentscript",
+        "aliases": ["AgentScript", "agentscript"],
+        "extensions": [".ags"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "agentscript",
+        "scopeName": "source.agentscript",
+        "path": "./syntaxes/agentscript.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "agentscript",
+        "path": "./snippets/agentscript.json"
+      }
+    ]
+  }
+}

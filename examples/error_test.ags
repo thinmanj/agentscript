@@ -1,0 +1,8 @@
+// Test file with intentional errors
+use io.csv
+
+intent TestProcessor {
+    description: "This has an error - missing closing brace
+    
+    pipeline: source.csv("test.csv") -> sink.csv("output.csv")
+}

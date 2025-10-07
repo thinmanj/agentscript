@@ -1,0 +1,10 @@
+// Simple AgentScript test
+use io.csv
+
+intent SimpleProcessor {
+    description: "Simple data processor"
+    
+    pipeline:
+        source.csv("input.csv")
+        -> sink.csv("output.csv")
+}

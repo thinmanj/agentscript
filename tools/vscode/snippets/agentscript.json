@@ -1,0 +1,87 @@
+{
+  "Basic Intent": {
+    "prefix": "intent",
+    "body": [
+      "intent ${1:IntentName} {",
+      "    description: \"${2:Description of what this intent does}\"",
+      "    ",
+      "    pipeline:",
+      "        ${3:source.csv(\"input.csv\")}",
+      "        -> ${4:filter(record => record.field > 0)}",
+      "        -> ${5:sink.json(\"output.json\")}",
+      "}"
+    ],
+    "description": "Create a basic intent with pipeline"
+  },
+  
+  "CSV Pipeline": {
+    "prefix": "csv-pipeline",
+    "body": [
+      "pipeline:",
+      "    source.csv(\"${1:input.csv}\")",
+      "    -> filter(${2:record} => ${3:record.field > 0})",
+      "    -> sink.csv(\"${4:output.csv}\")"
+    ],
+    "description": "CSV processing pipeline"
+  },
+  
+  "JSON Pipeline": {
+    "prefix": "json-pipeline", 
+    "body": [
+      "pipeline:",
+      "    source.json(\"${1:input.json}\")",
+      "    -> filter(${2:record} => ${3:record.field > 0})",
+      "    -> sink.json(\"${4:output.json}\")"
+    ],
+    "description": "JSON processing pipeline"
+  },
+  
+  "Filter Operation": {
+    "prefix": "filter",
+    "body": [
+      "filter(${1:record} => ${2:record.field > 0})"
+    ],
+    "description": "Filter records based on condition"
+  },
+  
+  "Transform Operation": {
+    "prefix": "transform",
+    "body": [
+      "transform(${1:record} => {",
+      "    ${2:field}: ${3:record.field},",
+      "    ${4:new_field}: ${5:\"value\"}",
+      "})"
+    ],
+    "description": "Transform records to new structure"
+  },
+  
+  "Import Statement": {
+    "prefix": "use",
+    "body": [
+      "use ${1:io.csv}, ${2:io.json}"
+    ],
+    "description": "Import AgentScript modules"
+  },
+  
+  "Behavior Definition": {
+    "prefix": "behavior",
+    "body": [
+      "behavior ${1:BehaviorName} {",
+      "    expects: ${2:InputType}",
+      "    returns: ${3:OutputType}",
+      "    description: \"${4:Description of the behavior}\"",
+      "    ",
+      "    validate ${5:input.field is not empty}",
+      "}"
+    ],
+    "description": "Define a custom behavior"
+  },
+  
+  "Error Handling": {
+    "prefix": "on_error",
+    "body": [
+      "on_error: ${1:log_and_continue}"
+    ],
+    "description": "Add error handling to intent"
+  }
+}

@@ -1,0 +1,36 @@
+// AgentScript Example: User Data Processing
+// This demonstrates basic data pipeline functionality
+
+// Import required modules
+use io.csv, io.json
+use validation.email, transformation.text
+
+// Define the main processing intent
+intent ProcessUsers {
+    description: "Process user data with age filtering and validation"
+    
+    // Define data flow pipeline
+    pipeline:
+        source.csv("users.csv")
+        -> filter(user => user.age >= 18)
+        -> transform(user => {
+            name: text.uppercase(user.name),
+            email: text.lowercase(user.email),
+            age: user.age,
+            status: "adult"
+        })
+        -> sink.json("processed_users.json")
+    
+    // Error handling
+    on_error: log_and_continue
+}
+
+// Example of a simpler data transformation
+intent SimpleFilter {
+    description: "Filter users by age only"
+    
+    pipeline:
+        source.csv("data.csv")
+        -> filter(record => record.age > 21)
+        -> sink.csv("adults.csv")
+}
