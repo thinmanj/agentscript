@@ -53,6 +53,68 @@ def compile_file(input_file: Path, output_file: Path = None):
     return 0
 
 
+def handle_ticket_commands(args):
+    """Handle ticket integration commands."""
+    try:
+        from .ticket_integration import (
+            create_tickets_from_agentscript_cli,
+            generate_agentscript_from_ticket_cli,
+            TicketIntegrationError
+        )
+    except ImportError as e:
+        print(f"Error: Ticket integration not available: {e}", file=sys.stderr)
+        return 1
+    
+    try:
+        if args.tickets_command == 'create':
+            if not args.input_file.exists():
+                print(f"Error: File not found: {args.input_file}", file=sys.stderr)
+                return 1
+                
+            result = create_tickets_from_agentscript_cli(
+                str(args.input_file),
+                args.epic_title,
+                args.priority,
+                args.assign_agent
+            )
+            
+            print(f"✅ Created epic: {result['epic_id']}")
+            print(f"✅ Created {len(result['tickets'])} tickets:")
+            for ticket in result['tickets']:
+                print(f"   - {ticket['id']}: {ticket['title']}")
+            
+            print(f"\n📊 Analysis Summary:")
+            analysis = result['analysis']
+            print(f"   - Complexity: {analysis['complexity']}")
+            print(f"   - Estimated hours: {analysis['estimated_hours']}")
+            print(f"   - Pipeline stages: {len(analysis['pipeline_stages'])}")
+            print(f"   - Data sources: {len(analysis['data_sources'])}")
+            print(f"   - Transformations: {len(analysis['transformations'])}")
+            
+            return 0
+            
+        elif args.tickets_command == 'generate':
+            output_path = generate_agentscript_from_ticket_cli(
+                args.ticket_id,
+                str(args.output) if args.output else None,
+                args.template
+            )
+            
+            print(f"✅ Generated AgentScript file: {output_path}")
+            return 0
+            
+        else:
+            print("Available ticket commands: create, generate")
+            return 1
+            
+    except TicketIntegrationError as e:
+        print(f"❌ Ticket integration error: {e}", file=sys.stderr)
+        return 1
+    except Exception as e:
+        print(f"❌ Unexpected error: {e}", file=sys.stderr)
+        return 1
+
+
 def main():
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -60,9 +122,15 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
+  # Compile AgentScript to Python
   agentscript compile data_processor.ags
   agentscript compile input.ags -o output.py
   agentscript compile *.ags
+  
+  # Ticket integration
+  agentscript tickets create pipeline.ags --priority high
+  agentscript tickets create pipeline.ags --epic-title "Data Pipeline" --assign-agent ai-dev
+  agentscript tickets generate TICKET-123 -o generated_pipeline.ags
         """
     )
     
@@ -79,6 +147,23 @@ Examples:
     
     # Version command
     version_parser = subparsers.add_parser('version', help='Show version information')
+    
+    # Ticket integration commands
+    tickets_parser = subparsers.add_parser('tickets', help='Integrate with repo-tickets')
+    tickets_subparsers = tickets_parser.add_subparsers(dest='tickets_command', help='Ticket operations')
+    
+    # Create tickets from AgentScript
+    create_tickets_parser = tickets_subparsers.add_parser('create', help='Create tickets from AgentScript analysis')
+    create_tickets_parser.add_argument('input_file', type=Path, help='AgentScript file to analyze')
+    create_tickets_parser.add_argument('--epic-title', help='Title for the epic (optional)')
+    create_tickets_parser.add_argument('--priority', default='medium', choices=['low', 'medium', 'high'], help='Ticket priority')
+    create_tickets_parser.add_argument('--assign-agent', help='Assign tickets to AI agent')
+    
+    # Generate AgentScript from ticket
+    generate_parser = tickets_subparsers.add_parser('generate', help='Generate AgentScript from ticket requirements')
+    generate_parser.add_argument('ticket_id', help='Ticket ID to generate from')
+    generate_parser.add_argument('-o', '--output', type=Path, help='Output AgentScript file path')
+    generate_parser.add_argument('--template', default='basic-pipeline', help='Template to use for generation')
     
     args = parser.parse_args()
     
@@ -106,6 +191,9 @@ Examples:
                 exit_code = result
         
         return exit_code
+    
+    elif args.command == 'tickets':
+        return handle_ticket_commands(args)
     
     else:
         parser.print_help()

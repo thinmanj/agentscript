@@ -1,0 +1,10 @@
+// Generated from ticket REQ-456: Financial Report Generator
+// Created: 2025-10-07 11:51:41
+
+use io.csv, io.json
+
+intent FinancialReportGenerator {
+    description: "Financial Report Generator"
+
+    pipeline: source.csv("transactions.csv") -> sink.json("monthly_report.json")
+}

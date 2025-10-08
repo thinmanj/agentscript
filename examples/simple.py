@@ -1,6 +1,6 @@
 # This file was automatically generated from AgentScript
 # Source: examples/simple.ags
-# Generated at: 2025-10-07 10:06:29
+# Generated at: 2025-10-07 10:18:57
 #
 # AgentScript is a declarative language for agentic program creation.
 # The generated code follows a specific structure to maintain clarity:

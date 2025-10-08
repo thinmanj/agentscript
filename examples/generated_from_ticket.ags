@@ -1,0 +1,10 @@
+// Generated from ticket DEMO-123: Process Sales Data Pipeline
+// Created: 2025-10-07 11:51:41
+
+use io.csv, io.json
+
+intent ProcessSalesDataPipeline {
+    description: "Process Sales Data Pipeline"
+
+    pipeline: source.csv("sales.csv") -> filter(record => record.amount > 100) -> sink.json("filtered_sales.json")
+}

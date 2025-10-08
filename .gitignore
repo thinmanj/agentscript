@@ -144,6 +144,7 @@ dmypy.json
 examples/*.py
 !examples/simple.py
 !examples/data_pipeline.py
+!examples/ticket_integration_demo.py
 
 # Temporary files
 *.tmp

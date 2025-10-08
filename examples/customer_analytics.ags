@@ -1,0 +1,10 @@
+// Generated from ticket PROJ-789: Create Customer Analytics Dashboard Data Pipeline
+// Created: 2025-10-07 11:52:40
+
+use io.csv, io.json
+
+intent CreateCustomerAnalyticsDashboardDataPipeline {
+    description: "Create Customer Analytics Dashboard Data Pipeline"
+
+    pipeline: source.csv("customer_data.csv") -> filter(record => record.active == true) -> sink.json("active_customers.json")
+}
