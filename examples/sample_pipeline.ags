@@ -1,0 +1,17 @@
+use io.csv, io.json
+
+intent CustomerAnalysis {
+    description: "Analyze customer data and generate insights"
+    
+    pipeline: source.csv("customers.csv") 
+           -> filter(customer => customer.age >= 18)
+           -> sink.json("customer_analysis.json")
+}
+
+intent SalesReport {
+    description: "Generate monthly sales reports"
+    
+    pipeline: source.csv("sales.csv")
+           -> filter(sale => sale.amount > 100)
+           -> sink.csv("high_value_sales.csv")
+}

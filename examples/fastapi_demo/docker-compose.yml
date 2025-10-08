@@ -1,0 +1,19 @@
+# Docker Compose for FastAPI application
+# Generated from AgentScript source: sample_pipeline.ags
+
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - '8000:8000'
+    environment:
+      - DEBUG=false
+    volumes:
+      - .:/app
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
