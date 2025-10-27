@@ -235,6 +235,10 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
+  # Interactive configuration wizard
+  agentscript init
+  agentscript init pipeline.ags
+  
   # Compile AgentScript to Python (default pandas)
   agentscript compile data_processor.ags
   agentscript compile input.ags -o output.py
@@ -290,6 +294,10 @@ Examples:
     # Plugin list command
     plugins_parser = subparsers.add_parser('plugins', help='List available plugins and their capabilities')
     plugins_parser.add_argument('--verbose', '-v', action='store_true', help='Show detailed plugin information')
+    
+    # Interactive wizard command
+    wizard_parser = subparsers.add_parser('init', help='Interactive wizard for project configuration')
+    wizard_parser.add_argument('source_file', nargs='?', type=Path, help='Optional AgentScript source file')
     
     # Ticket integration commands
     tickets_parser = subparsers.add_parser('tickets', help='Integrate with repo-tickets')
@@ -359,6 +367,25 @@ Examples:
     
     elif args.command == 'plugins':
         return list_plugins(args.verbose)
+    
+    elif args.command == 'init':
+        # Run interactive wizard
+        try:
+            from .interactive import run_interactive_wizard
+            config = run_interactive_wizard(args.source_file if hasattr(args, 'source_file') else None)
+            if config:
+                print("\n✅ Configuration complete! Use 'agentscript compile' to generate code.")
+                return 0
+            else:
+                print("\n❌ Configuration cancelled")
+                return 1
+        except ImportError:
+            print("Error: Interactive mode requires 'rich' library", file=sys.stderr)
+            print("Install with: pip install rich", file=sys.stderr)
+            return 1
+        except Exception as e:
+            print(f"Error: {e}", file=sys.stderr)
+            return 1
     
     elif args.command == 'tickets':
         return handle_ticket_commands(args)
