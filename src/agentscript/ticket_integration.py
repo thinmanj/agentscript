@@ -173,9 +173,10 @@ class AgentScriptTicketIntegration:
         file_path: Path, 
         epic_title: str = None,
         priority: str = "medium",
-        assign_agent: str = None
+        assign_agent: str = None,
+        target_framework: str = None
     ) -> Dict[str, Any]:
-        """Create tickets and epic from AgentScript analysis."""
+        """Create tickets and epic from AgentScript analysis with framework-specific tasks."""
         if not self.is_tickets_available():
             raise TicketIntegrationError("tickets command not available")
         
@@ -250,16 +251,25 @@ Implementation task for pipeline stage {stage['index'] + 1}.
                         "stage": stage
                     })
             
+            # Add framework-specific tickets if target is specified
+            if target_framework:
+                fw_tickets = self._create_framework_tickets(
+                    file_path, target_framework, result["epic_id"], priority, assign_agent
+                )
+                result["tickets"].extend(fw_tickets)
+            
             # Create overall implementation ticket
             impl_title = f"Compile and Test {file_path.stem}"
+            target_info = f" for {target_framework.capitalize()}" if target_framework else ""
             impl_desc = f"""
-Overall compilation and testing task for the AgentScript pipeline.
+Overall compilation and testing task for the AgentScript pipeline{target_info}.
 
 **Deliverables:**
-- Compile {file_path.name} to Python
+- Compile {file_path.name} to {target_framework or 'Python'}
 - Generate test cases from pipeline stages
 - Validate output format and data quality
 - Update documentation
+{self._get_framework_deliverables(target_framework)}
 
 **Complexity:** {analysis['complexity']}
 **Estimated Hours:** {analysis['estimated_hours']}
@@ -309,6 +319,169 @@ Overall compilation and testing task for the AgentScript pipeline.
                 lines.append(f"- {param['type']}: {param['value']}")
         
         return "\n".join(lines)
+    
+    def _get_framework_deliverables(self, framework: str) -> str:
+        """Get framework-specific deliverables for tickets."""
+        if not framework:
+            return ""
+        
+        deliverables = {
+            "django": """
+- Create Django models from pipeline data structures
+- Implement serializers for API endpoints
+- Configure Django admin interface
+- Set up database migrations
+- Create API views and URL routing""",
+            "fastapi": """
+- Create Pydantic models for request/response validation
+- Implement async API endpoints
+- Configure OpenAPI documentation
+- Set up dependency injection for database
+- Create background tasks for pipeline execution""",
+            "flask": """
+- Create Flask blueprints for API routes
+- Implement SQLAlchemy models
+- Configure Flask-Admin interface
+- Set up database migrations with Flask-Migrate
+- Create API endpoints with error handling""",
+            "tui": """
+- Design terminal user interface layout
+- Implement Rich/Textual widgets for data display
+- Create interactive pipeline controls
+- Add progress indicators and status displays
+- Configure keyboard shortcuts and navigation"""
+        }
+        
+        return deliverables.get(framework, "")
+    
+    def _create_framework_tickets(
+        self,
+        file_path: Path,
+        framework: str,
+        epic_id: str,
+        priority: str,
+        assign_agent: str = None
+    ) -> List[Dict[str, Any]]:
+        """Create framework-specific implementation tickets."""
+        tickets = []
+        
+        framework_tasks = {
+            "django": [
+                ("Set up Django project structure", "Initialize Django project with proper settings and app structure"),
+                ("Create database models", "Implement Django models based on pipeline data structures"),
+                ("Implement serializers", "Create DRF serializers for data validation and transformation"),
+                ("Create API views", "Implement viewsets and API endpoints for pipeline execution"),
+                ("Configure admin interface", "Set up Django admin for pipeline management"),
+                ("Add authentication", "Implement user authentication and permissions"),
+            ],
+            "fastapi": [
+                ("Set up FastAPI project", "Initialize FastAPI application with proper structure"),
+                ("Create Pydantic models", "Define request/response models for type safety"),
+                ("Implement async endpoints", "Create async API routes for pipeline operations"),
+                ("Configure database", "Set up SQLAlchemy async database connection"),
+                ("Add authentication", "Implement JWT authentication middleware"),
+                ("Generate OpenAPI docs", "Configure and customize Swagger/ReDoc documentation"),
+            ],
+            "flask": [
+                ("Set up Flask application", "Initialize Flask app with application factory pattern"),
+                ("Create database models", "Implement SQLAlchemy models for pipeline data"),
+                ("Design blueprints", "Create Flask blueprints for API organization"),
+                ("Implement API routes", "Create RESTful endpoints for pipeline operations"),
+                ("Configure Flask-Admin", "Set up admin interface for pipeline management"),
+                ("Add database migrations", "Configure Flask-Migrate for schema management"),
+            ],
+            "tui": [
+                ("Design TUI layout", "Create terminal interface layout and screens"),
+                ("Implement data widgets", "Build Rich/Textual widgets for data display"),
+                ("Add interactive controls", "Create buttons, inputs, and navigation"),
+                ("Implement pipeline executor", "Build background task runner for pipelines"),
+                ("Add configuration screen", "Create settings and configuration interface"),
+                ("Implement logging view", "Build real-time log viewer"),
+            ]
+        }
+        
+        tasks = framework_tasks.get(framework, [])
+        
+        for title, description in tasks:
+            full_title = f"[{framework.upper()}] {title}"
+            full_desc = f"""
+{description}
+
+**Framework:** {framework.capitalize()}
+**Source:** {file_path.name}
+
+**Implementation Notes:**
+{self._get_implementation_notes(framework, title)}
+
+**Generated from AgentScript analysis for {framework} target**
+"""
+            
+            try:
+                ticket_cmd = [
+                    "tickets", "create", full_title,
+                    "--description", full_desc.strip(),
+                    "--priority", priority,
+                    "--epic-id", epic_id,
+                    "--labels", f"agentscript,{framework},implementation",
+                    "--format", "json"
+                ]
+                
+                if assign_agent:
+                    ticket_cmd.extend(["--assignee", assign_agent])
+                
+                ticket_result = subprocess.run(ticket_cmd, capture_output=True, text=True, check=True)
+                ticket_data = json.loads(ticket_result.stdout)
+                
+                tickets.append({
+                    "id": ticket_data["id"],
+                    "title": full_title,
+                    "framework": framework,
+                    "task_type": title
+                })
+            except (subprocess.CalledProcessError, json.JSONDecodeError) as e:
+                # Continue with other tickets even if one fails
+                pass
+        
+        return tickets
+    
+    def _get_implementation_notes(self, framework: str, task: str) -> str:
+        """Get implementation notes for specific framework tasks."""
+        notes = {
+            "django": {
+                "Set up Django project structure": "Use django-admin startproject and create apps for pipeline components",
+                "Create database models": "Inherit from models.Model and define fields based on pipeline data types",
+                "Implement serializers": "Use ModelSerializer for automatic field mapping",
+                "Create API views": "Use ViewSets with appropriate mixins for CRUD operations",
+                "Configure admin interface": "Register models with custom ModelAdmin classes",
+                "Add authentication": "Use Django REST Framework's TokenAuthentication or JWT",
+            },
+            "fastapi": {
+                "Set up FastAPI project": "Create main.py with FastAPI() instance and router organization",
+                "Create Pydantic models": "Use BaseModel with type hints and validators",
+                "Implement async endpoints": "Use async def with await for database operations",
+                "Configure database": "Use SQLAlchemy 2.0 async engine with asyncpg",
+                "Add authentication": "Implement OAuth2 with JWT tokens",
+                "Generate OpenAPI docs": "Customize metadata, tags, and example values",
+            },
+            "flask": {
+                "Set up Flask application": "Use application factory pattern with create_app()",
+                "Create database models": "Use Flask-SQLAlchemy's db.Model base class",
+                "Design blueprints": "Organize routes by functionality (api, admin, main)",
+                "Implement API routes": "Use @blueprint.route() decorators with proper HTTP methods",
+                "Configure Flask-Admin": "Create ModelView classes for each model",
+                "Add database migrations": "Initialize Alembic and create initial migration",
+            },
+            "tui": {
+                "Design TUI layout": "Use Textual's Screen and Container widgets",
+                "Implement data widgets": "Create custom widgets inheriting from Widget",
+                "Add interactive controls": "Use Button, Input, and DataTable widgets",
+                "Implement pipeline executor": "Use asyncio.create_task() for background execution",
+                "Add configuration screen": "Create modal dialog with form inputs",
+                "Implement logging view": "Use RichLog widget for scrollable log display",
+            }
+        }
+        
+        return notes.get(framework, {}).get(task, "Follow framework best practices")
     
     def generate_agentscript_from_ticket(
         self,
@@ -438,12 +611,13 @@ def create_tickets_from_agentscript_cli(
     file_path: str,
     epic_title: str = None,
     priority: str = "medium",
-    assign_agent: str = None
+    assign_agent: str = None,
+    target_framework: str = None
 ) -> Dict[str, Any]:
-    """CLI wrapper for creating tickets from AgentScript analysis."""
+    """CLI wrapper for creating tickets from AgentScript analysis with framework support."""
     integration = AgentScriptTicketIntegration()
     return integration.create_tickets_from_agentscript(
-        Path(file_path), epic_title, priority, assign_agent
+        Path(file_path), epic_title, priority, assign_agent, target_framework
     )
 
 

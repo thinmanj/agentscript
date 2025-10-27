@@ -188,7 +188,8 @@ def handle_ticket_commands(args):
                 str(args.input_file),
                 args.epic_title,
                 args.priority,
-                args.assign_agent
+                args.assign_agent,
+                args.target if hasattr(args, 'target') else None
             )
             
             print(f"✅ Created epic: {result['epic_id']}")
@@ -309,6 +310,8 @@ Examples:
     create_tickets_parser.add_argument('--epic-title', help='Title for the epic (optional)')
     create_tickets_parser.add_argument('--priority', default='medium', choices=['low', 'medium', 'high'], help='Ticket priority')
     create_tickets_parser.add_argument('--assign-agent', help='Assign tickets to AI agent')
+    create_tickets_parser.add_argument('--target', choices=['django', 'fastapi', 'flask', 'tui'], 
+                                      help='Target framework for framework-specific tickets')
     
     # Generate AgentScript from ticket
     generate_parser = tickets_subparsers.add_parser('generate', help='Generate AgentScript from ticket requirements')
