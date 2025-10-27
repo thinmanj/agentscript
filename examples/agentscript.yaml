@@ -1,0 +1,70 @@
+# AgentScript Configuration File (YAML)
+# This file configures AgentScript compiler and plugins
+
+version: "1.0.0"
+project_name: "data_pipeline_app"
+environment: "development"  # Options: development, production, testing
+
+# Plugin configuration
+plugin:
+  target: "django"  # Options: pandas, django, fastapi, flask, tui
+  app_name: "data_pipeline"
+  enable_admin: true
+  enable_async: false
+  
+  # Database configuration
+  database:
+    engine: "postgresql"  # Options: sqlite, postgresql, mysql
+    name: "agentscript_db"
+    host: "localhost"
+    port: 5432
+    user: "agentscript_user"
+    password: ""  # Set via DATABASE_PASSWORD environment variable
+    connection_pool_size: 10
+    echo_sql: false
+  
+  # Authentication configuration
+  authentication:
+    enabled: true
+    secret_key: ""  # Set via SECRET_KEY environment variable
+    token_expiry_hours: 24
+    password_min_length: 8
+    require_email_verification: false
+    allow_registration: true
+    session_timeout_minutes: 60
+    jwt_algorithm: "HS256"
+  
+  # API configuration
+  api:
+    enabled: true
+    host: "0.0.0.0"
+    port: 8000
+    cors_enabled: true
+    cors_origins:
+      - "*"
+    rate_limit_enabled: false
+    rate_limit_per_minute: 60
+    enable_docs: true
+    api_prefix: "/api"
+  
+  # Custom plugin options
+  custom_options:
+    celery_enabled: false
+    redis_url: "redis://localhost:6379"
+
+# Compiler configuration
+compiler:
+  optimization_level: 1  # 0-3
+  generate_type_hints: true
+  strict_mode: false
+  output_format: "python"
+  include_comments: true
+  code_style: "pep8"
+
+# Logging configuration
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: null  # Set to file path to enable file logging
+  max_file_size_mb: 10
+  backup_count: 5
